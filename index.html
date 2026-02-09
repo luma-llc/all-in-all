@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>All IN All — Kadoka</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Instrument+Serif:ital@0;1&display=swap');
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--gold:#c9a84c;--gold-l:#d4b85a;--gold-d:#8a7535;--blk:#080808;--cream:#e8dcc8}
+html,body{background:var(--blk);color:var(--gold);font-family:'Cormorant Garamond',Georgia,serif;overflow:hidden;width:100vw;height:100vh;cursor:default;-webkit-user-select:none;user-select:none}
+#veil{position:fixed;inset:0;background:var(--blk);z-index:1000;display:flex;align-items:center;justify-content:center;flex-direction:column;transition:opacity 2.5s ease;cursor:pointer}
+#veil.fading{opacity:0;pointer-events:none}
+#veil-text{font-family:'Instrument Serif',Georgia,serif;font-size:clamp(14px,2.5vw,22px);letter-spacing:.45em;color:var(--gold-d);opacity:0;animation:fi 3s ease .5s forwards}
+#veil-sub{font-family:'Cormorant Garamond',serif;font-weight:300;font-style:italic;font-size:clamp(11px,1.5vw,15px);letter-spacing:.15em;color:var(--gold-d);opacity:0;margin-top:1.5em;animation:fi 2s ease 2.5s forwards}
+@keyframes fi{to{opacity:.7}}
+#world{position:fixed;inset:0;display:flex;align-items:flex-start;justify-content:center;padding-top:5vh;opacity:0;transition:opacity 2s ease .5s}
+#world.visible{opacity:1}
+#symbol-wrap{position:relative;width:min(70vh,80vw);height:min(70vh,80vw)}
+#shader-canvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity 4s ease}
+#shader-canvas.active{opacity:1}
+#symbol-svg{position:relative;width:100%;height:100%;overflow:visible}
+.zone{fill:rgba(201,168,76,0);stroke:none;cursor:pointer}
+.zone:hover{fill:rgba(201,168,76,.04)}
+.zone.pulse{animation:zone-pulse 2s ease forwards}
+@keyframes zone-pulse{0%{fill:rgba(201,168,76,0)}8%{fill:rgba(180,130,60,.14)}100%{fill:rgba(201,168,76,0)}}
+#lyric-float{position:fixed;left:50%;top:0;bottom:0;transform:translateX(-50%);font-family:'Cormorant Garamond',serif;font-weight:300;font-style:italic;font-size:clamp(17px,2.2vw,25px);color:var(--gold);text-align:center;pointer-events:none;z-index:200;width:55vw;overflow:hidden}
+#lyric-float .drip{position:absolute;left:0;right:0;opacity:0;animation:drip-fall 20s linear forwards;text-shadow:0 0 40px rgba(8,8,8,1),0 0 80px rgba(8,8,8,.9);padding:4px 0;line-height:1.9}
+#lyric-float .drip.tier-bronze{animation:drip-fall 20s linear forwards,glow-bronze 3.5s ease-in-out infinite}
+#lyric-float .drip.tier-silver{animation:drip-fall 20s linear forwards,glow-silver 3.5s ease-in-out infinite}
+#lyric-float .drip.tier-gold{animation:drip-fall 20s linear forwards,glow-gold 3.5s ease-in-out infinite}
+@keyframes drip-fall{0%{opacity:0;top:94vh}4%{opacity:.25}10%{opacity:.6}16%{opacity:.75}78%{opacity:.65}88%{opacity:.35}95%{opacity:.12}100%{opacity:0;top:68vh}}
+@keyframes glow-bronze{0%{color:var(--gold);text-shadow:0 0 40px rgba(8,8,8,1),0 0 80px rgba(8,8,8,.9)}50%{color:var(--gold-l);text-shadow:0 0 30px rgba(201,168,76,.2),0 0 60px rgba(8,8,8,.85)}100%{color:var(--gold);text-shadow:0 0 40px rgba(8,8,8,1),0 0 80px rgba(8,8,8,.9)}}
+@keyframes glow-silver{0%{color:var(--gold);text-shadow:0 0 40px rgba(8,8,8,1),0 0 80px rgba(8,8,8,.9)}50%{color:var(--gold-l);text-shadow:0 0 30px rgba(201,168,76,.2),0 0 60px rgba(8,8,8,.85)}100%{color:var(--gold);text-shadow:0 0 40px rgba(8,8,8,1),0 0 80px rgba(8,8,8,.9)}}
+@keyframes glow-gold{0%{color:var(--gold);text-shadow:0 0 40px rgba(8,8,8,1),0 0 80px rgba(8,8,8,.9)}50%{color:var(--gold-l);text-shadow:0 0 30px rgba(201,168,76,.25),0 0 60px rgba(8,8,8,.85)}100%{color:var(--gold);text-shadow:0 0 40px rgba(8,8,8,1),0 0 80px rgba(8,8,8,.9)}}
+#album-header{position:fixed;top:1.5vh;left:50%;transform:translateX(-50%);text-align:center;z-index:50;opacity:0;transition:opacity 1.5s ease 1s}
+#world.visible #album-header{opacity:1}
+#album-name{font-family:'Instrument Serif',Georgia,serif;font-size:clamp(15px,2.4vw,24px);letter-spacing:.55em;color:var(--gold-d);opacity:.5}
+#artist-name{font-family:'Cormorant Garamond',serif;font-weight:300;font-style:italic;font-size:clamp(12px,1.5vw,16px);letter-spacing:.3em;color:var(--gold-d);opacity:.3;margin-top:.4em}
+#grain{position:fixed;inset:0;opacity:.025;pointer-events:none;z-index:999;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-repeat:repeat;background-size:256px}
+</style>
+</head>
+<body>
+<div id="grain"></div>
+<div id="veil" onclick="enter()">
+  <div id="veil-text">All IN All</div>
+  <div id="veil-sub">Kadoka</div>
+</div>
+<div id="world">
+  <div id="album-header">
+    <div id="album-name">All IN All</div>
+    <div id="artist-name">Kadoka</div>
+  </div>
+  <div id="symbol-wrap">
+    <canvas id="shader-canvas"></canvas>
+    <svg id="symbol-svg" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
+
+      <!-- ========== GEOMETRY ========== -->
+
+      <!-- LAYER 1: RINGS with black fill to occlude diagonal arrow lines -->
+      <circle cx="500" cy="500" r="340" fill="var(--blk)"/>
+      <circle cx="500" cy="500" r="340" fill="none" stroke="var(--gold)" stroke-width=".7" opacity=".3"/>
+      <circle cx="500" cy="500" r="309" fill="none" stroke="var(--gold)" stroke-width=".7" opacity=".32"/>
+      <circle cx="500" cy="500" r="278" fill="none" stroke="var(--gold)" stroke-width=".7" opacity=".34"/>
+      <circle cx="500" cy="500" r="247" fill="none" stroke="var(--gold)" stroke-width=".7" opacity=".36"/>
+      <circle cx="500" cy="500" r="216" fill="none" stroke="var(--gold)" stroke-width=".7" opacity=".38"/>
+      <circle cx="500" cy="500" r="185" fill="none" stroke="var(--gold)" stroke-width=".7" opacity=".4"/>
+      <circle cx="500" cy="500" r="155" fill="none" stroke="var(--gold)" stroke-width=".7" opacity=".44"/>
+      <circle cx="500" cy="500" r="123" fill="none" stroke="var(--gold)" stroke-width=".7" opacity=".5"/>
+
+      <!-- LAYER 2: 8 CRESCENT-TIP LINES — ON TOP of rings, visible through them -->
+      <!-- From center square corners to each crescent tip -->
+      <!-- Upper-left corner (495,495) → N-left-tip, W-upper-tip -->
+      <line x1="500" y1="500" x2="405" y2="110" stroke="var(--gold)" stroke-width=".7" opacity=".4"/>
+      <line x1="500" y1="500" x2="110" y2="405" stroke="var(--gold)" stroke-width=".7" opacity=".4"/>
+      <!-- Upper-right corner (505,495) → N-right-tip, E-upper-tip -->
+      <line x1="500" y1="500" x2="595" y2="110" stroke="var(--gold)" stroke-width=".7" opacity=".4"/>
+      <line x1="500" y1="500" x2="890" y2="405" stroke="var(--gold)" stroke-width=".7" opacity=".4"/>
+      <!-- Lower-left corner (495,505) → S-left-tip, W-lower-tip -->
+      <line x1="500" y1="500" x2="405" y2="890" stroke="var(--gold)" stroke-width=".7" opacity=".4"/>
+      <line x1="500" y1="500" x2="110" y2="595" stroke="var(--gold)" stroke-width=".7" opacity=".4"/>
+      <!-- Lower-right corner (505,505) → S-right-tip, E-lower-tip -->
+      <line x1="500" y1="500" x2="595" y2="890" stroke="var(--gold)" stroke-width=".7" opacity=".4"/>
+      <line x1="500" y1="500" x2="890" y2="595" stroke="var(--gold)" stroke-width=".7" opacity=".4"/>
+
+      <!-- 4 DIAGONAL ARROW LINES — only visible outside the rings -->
+      <line x1="260" y1="260" x2="120" y2="120" stroke="var(--gold)" stroke-width=".7" opacity=".4"/>
+      <line x1="740" y1="260" x2="880" y2="120" stroke="var(--gold)" stroke-width=".7" opacity=".4"/>
+      <line x1="260" y1="740" x2="120" y2="880" stroke="var(--gold)" stroke-width=".7" opacity=".4"/>
+      <line x1="740" y1="740" x2="880" y2="880" stroke="var(--gold)" stroke-width=".7" opacity=".4"/>
+
+      <!-- LAYER 3: CENTER CIRCLE + STARBURST -->
+      <!-- Thick circle stroke -->
+      <circle cx="500" cy="500" r="93" fill="none" stroke="var(--gold)" stroke-width="2.5" opacity=".7"/>
+      <!-- Diagonal rays inside thick circle -->
+      <line x1="500" y1="500" x2="434" y2="434" stroke="var(--gold)" stroke-width=".45" opacity=".4"/>
+      <line x1="500" y1="500" x2="566" y2="434" stroke="var(--gold)" stroke-width=".45" opacity=".4"/>
+      <line x1="500" y1="500" x2="434" y2="566" stroke="var(--gold)" stroke-width=".45" opacity=".4"/>
+      <line x1="500" y1="500" x2="566" y2="566" stroke="var(--gold)" stroke-width=".45" opacity=".4"/>
+      <!-- Tiny square — drawn last so it's visible but converging lines are on top -->
+      <rect x="492" y="492" width="16" height="16" fill="none" stroke="var(--gold)" stroke-width=".4" opacity=".35"/>
+
+      <!-- LAYER 4: CRESCENTS — fully outside rings, TIPS face OUTWARD -->
+      <!-- Belly (convex back) grazes the outer ring from outside -->
+      <!-- Tips (horns) point outward, away from center -->
+      <!-- Outer arc = convex belly, bows TOWARD center (grazes ring) -->
+      <!-- Inner arc = concave opening side, bows AWAY from center -->
+
+      <!-- NORTH: belly grazes ring at y≈160, tips at y≈110 pointing UP/outward -->
+      <path d="M 405,110 A 146,146 0 0,0 595,110 A 115,115 0 0,1 405,110 Z"
+            fill="var(--gold)" fill-opacity=".75" stroke="var(--gold)" stroke-width=".5" opacity=".8"/>
+      <!-- SOUTH: belly grazes ring at y≈840, tips at y≈890 pointing DOWN/outward -->
+      <path d="M 405,890 A 146,146 0 0,1 595,890 A 115,115 0 0,0 405,890 Z"
+            fill="var(--gold)" fill-opacity=".75" stroke="var(--gold)" stroke-width=".5" opacity=".8"/>
+      <!-- WEST: belly grazes ring at x≈160, tips at x≈110 pointing LEFT/outward -->
+      <path d="M 110,405 A 146,146 0 0,1 110,595 A 115,115 0 0,0 110,405 Z"
+            fill="var(--gold)" fill-opacity=".75" stroke="var(--gold)" stroke-width=".5" opacity=".8"/>
+      <!-- EAST: belly grazes ring at x≈840, tips at x≈890 pointing RIGHT/outward -->
+      <path d="M 890,405 A 146,146 0 0,0 890,595 A 115,115 0 0,1 890,405 Z"
+            fill="var(--gold)" fill-opacity=".75" stroke="var(--gold)" stroke-width=".5" opacity=".8"/>
+
+      <!-- LAYER 5: ARROWHEADS -->
+      <polygon points="120,120 148,135 135,148" fill="var(--gold)" opacity=".7"/>
+      <polygon points="880,120 852,135 865,148" fill="var(--gold)" opacity=".7"/>
+      <polygon points="120,880 148,865 135,852" fill="var(--gold)" opacity=".7"/>
+      <polygon points="880,880 852,865 865,852" fill="var(--gold)" opacity=".7"/>
+
+      <!-- ========== 64-CELL TOUCHABLE GRID ========== -->
+      <!-- Each cell = intersection of 1 sector × 1 ring band -->
+      <!-- Sector order: nw, north, ne, east, se, south, sw, west -->
+      <!-- Ring 1 (innermost) to Ring 8 (outermost) -->
+
+      <!-- RIPPLE LAYER — above geometry, below interactive zones -->
+      <g id="ripple-layer"></g>
+
+      <!-- NW sector -->
+      <path class="zone" data-zone="nw_r1" d="M 380.5,470.9 A 123,123 0 0,1 470.9,380.5 L 478.0,409.6 A 93,93 0 0,0 409.6,478.0 Z"/>
+      <path class="zone" data-zone="nw_r2" d="M 349.4,463.3 A 155,155 0 0,1 463.3,349.4 L 470.9,380.5 A 123,123 0 0,0 380.5,470.9 Z"/>
+      <path class="zone" data-zone="nw_r3" d="M 320.3,456.2 A 185,185 0 0,1 456.2,320.3 L 463.3,349.4 A 155,155 0 0,0 349.4,463.3 Z"/>
+      <path class="zone" data-zone="nw_r4" d="M 290.1,448.9 A 216,216 0 0,1 448.9,290.1 L 456.2,320.3 A 185,185 0 0,0 320.3,456.2 Z"/>
+      <path class="zone" data-zone="nw_r5" d="M 260.0,441.5 A 247,247 0 0,1 441.5,260.0 L 448.9,290.1 A 216,216 0 0,0 290.1,448.9 Z"/>
+      <path class="zone" data-zone="nw_r6" d="M 229.9,434.2 A 278,278 0 0,1 434.2,229.9 L 441.5,260.0 A 247,247 0 0,0 260.0,441.5 Z"/>
+      <path class="zone" data-zone="nw_r7" d="M 199.8,426.9 A 309,309 0 0,1 426.9,199.8 L 434.2,229.9 A 278,278 0 0,0 229.9,434.2 Z"/>
+      <path class="zone" data-zone="nw_r8" d="M 169.7,419.5 A 340,340 0 0,1 419.5,169.7 L 426.9,199.8 A 309,309 0 0,0 199.8,426.9 Z"/>
+
+      <!-- NORTH sector -->
+      <path class="zone" data-zone="north_r1" d="M 470.9,380.5 A 123,123 0 0,1 529.1,380.5 L 522.0,409.6 A 93,93 0 0,0 478.0,409.6 Z"/>
+      <path class="zone" data-zone="north_r2" d="M 463.3,349.4 A 155,155 0 0,1 536.7,349.4 L 529.1,380.5 A 123,123 0 0,0 470.9,380.5 Z"/>
+      <path class="zone" data-zone="north_r3" d="M 456.2,320.3 A 185,185 0 0,1 543.8,320.3 L 536.7,349.4 A 155,155 0 0,0 463.3,349.4 Z"/>
+      <path class="zone" data-zone="north_r4" d="M 448.9,290.1 A 216,216 0 0,1 551.1,290.1 L 543.8,320.3 A 185,185 0 0,0 456.2,320.3 Z"/>
+      <path class="zone" data-zone="north_r5" d="M 441.5,260.0 A 247,247 0 0,1 558.5,260.0 L 551.1,290.1 A 216,216 0 0,0 448.9,290.1 Z"/>
+      <path class="zone" data-zone="north_r6" d="M 434.2,229.9 A 278,278 0 0,1 565.8,229.9 L 558.5,260.0 A 247,247 0 0,0 441.5,260.0 Z"/>
+      <path class="zone" data-zone="north_r7" d="M 426.9,199.8 A 309,309 0 0,1 573.1,199.8 L 565.8,229.9 A 278,278 0 0,0 434.2,229.9 Z"/>
+      <path class="zone" data-zone="north_r8" d="M 419.5,169.7 A 340,340 0 0,1 580.5,169.7 L 573.1,199.8 A 309,309 0 0,0 426.9,199.8 Z"/>
+
+      <!-- NE sector -->
+      <path class="zone" data-zone="ne_r1" d="M 529.1,380.5 A 123,123 0 0,1 619.5,470.9 L 590.4,478.0 A 93,93 0 0,0 522.0,409.6 Z"/>
+      <path class="zone" data-zone="ne_r2" d="M 536.7,349.4 A 155,155 0 0,1 650.6,463.3 L 619.5,470.9 A 123,123 0 0,0 529.1,380.5 Z"/>
+      <path class="zone" data-zone="ne_r3" d="M 543.8,320.3 A 185,185 0 0,1 679.7,456.2 L 650.6,463.3 A 155,155 0 0,0 536.7,349.4 Z"/>
+      <path class="zone" data-zone="ne_r4" d="M 551.1,290.1 A 216,216 0 0,1 709.9,448.9 L 679.7,456.2 A 185,185 0 0,0 543.8,320.3 Z"/>
+      <path class="zone" data-zone="ne_r5" d="M 558.5,260.0 A 247,247 0 0,1 740.0,441.5 L 709.9,448.9 A 216,216 0 0,0 551.1,290.1 Z"/>
+      <path class="zone" data-zone="ne_r6" d="M 565.8,229.9 A 278,278 0 0,1 770.1,434.2 L 740.0,441.5 A 247,247 0 0,0 558.5,260.0 Z"/>
+      <path class="zone" data-zone="ne_r7" d="M 573.1,199.8 A 309,309 0 0,1 800.2,426.9 L 770.1,434.2 A 278,278 0 0,0 565.8,229.9 Z"/>
+      <path class="zone" data-zone="ne_r8" d="M 580.5,169.7 A 340,340 0 0,1 830.3,419.5 L 800.2,426.9 A 309,309 0 0,0 573.1,199.8 Z"/>
+
+      <!-- EAST sector -->
+      <path class="zone" data-zone="east_r1" d="M 619.5,470.9 A 123,123 0 0,1 619.5,529.1 L 590.4,522.0 A 93,93 0 0,0 590.4,478.0 Z"/>
+      <path class="zone" data-zone="east_r2" d="M 650.6,463.3 A 155,155 0 0,1 650.6,536.7 L 619.5,529.1 A 123,123 0 0,0 619.5,470.9 Z"/>
+      <path class="zone" data-zone="east_r3" d="M 679.7,456.2 A 185,185 0 0,1 679.7,543.8 L 650.6,536.7 A 155,155 0 0,0 650.6,463.3 Z"/>
+      <path class="zone" data-zone="east_r4" d="M 709.9,448.9 A 216,216 0 0,1 709.9,551.1 L 679.7,543.8 A 185,185 0 0,0 679.7,456.2 Z"/>
+      <path class="zone" data-zone="east_r5" d="M 740.0,441.5 A 247,247 0 0,1 740.0,558.5 L 709.9,551.1 A 216,216 0 0,0 709.9,448.9 Z"/>
+      <path class="zone" data-zone="east_r6" d="M 770.1,434.2 A 278,278 0 0,1 770.1,565.8 L 740.0,558.5 A 247,247 0 0,0 740.0,441.5 Z"/>
+      <path class="zone" data-zone="east_r7" d="M 800.2,426.9 A 309,309 0 0,1 800.2,573.1 L 770.1,565.8 A 278,278 0 0,0 770.1,434.2 Z"/>
+      <path class="zone" data-zone="east_r8" d="M 830.3,419.5 A 340,340 0 0,1 830.3,580.5 L 800.2,573.1 A 309,309 0 0,0 800.2,426.9 Z"/>
+
+      <!-- SE sector -->
+      <path class="zone" data-zone="se_r1" d="M 619.5,529.1 A 123,123 0 0,1 529.1,619.5 L 522.0,590.4 A 93,93 0 0,0 590.4,522.0 Z"/>
+      <path class="zone" data-zone="se_r2" d="M 650.6,536.7 A 155,155 0 0,1 536.7,650.6 L 529.1,619.5 A 123,123 0 0,0 619.5,529.1 Z"/>
+      <path class="zone" data-zone="se_r3" d="M 679.7,543.8 A 185,185 0 0,1 543.8,679.7 L 536.7,650.6 A 155,155 0 0,0 650.6,536.7 Z"/>
+      <path class="zone" data-zone="se_r4" d="M 709.9,551.1 A 216,216 0 0,1 551.1,709.9 L 543.8,679.7 A 185,185 0 0,0 679.7,543.8 Z"/>
+      <path class="zone" data-zone="se_r5" d="M 740.0,558.5 A 247,247 0 0,1 558.5,740.0 L 551.1,709.9 A 216,216 0 0,0 709.9,551.1 Z"/>
+      <path class="zone" data-zone="se_r6" d="M 770.1,565.8 A 278,278 0 0,1 565.8,770.1 L 558.5,740.0 A 247,247 0 0,0 740.0,558.5 Z"/>
+      <path class="zone" data-zone="se_r7" d="M 800.2,573.1 A 309,309 0 0,1 573.1,800.2 L 565.8,770.1 A 278,278 0 0,0 770.1,565.8 Z"/>
+      <path class="zone" data-zone="se_r8" d="M 830.3,580.5 A 340,340 0 0,1 580.5,830.3 L 573.1,800.2 A 309,309 0 0,0 800.2,573.1 Z"/>
+
+      <!-- SOUTH sector -->
+      <path class="zone" data-zone="south_r1" d="M 529.1,619.5 A 123,123 0 0,1 470.9,619.5 L 478.0,590.4 A 93,93 0 0,0 522.0,590.4 Z"/>
+      <path class="zone" data-zone="south_r2" d="M 536.7,650.6 A 155,155 0 0,1 463.3,650.6 L 470.9,619.5 A 123,123 0 0,0 529.1,619.5 Z"/>
+      <path class="zone" data-zone="south_r3" d="M 543.8,679.7 A 185,185 0 0,1 456.2,679.7 L 463.3,650.6 A 155,155 0 0,0 536.7,650.6 Z"/>
+      <path class="zone" data-zone="south_r4" d="M 551.1,709.9 A 216,216 0 0,1 448.9,709.9 L 456.2,679.7 A 185,185 0 0,0 543.8,679.7 Z"/>
+      <path class="zone" data-zone="south_r5" d="M 558.5,740.0 A 247,247 0 0,1 441.5,740.0 L 448.9,709.9 A 216,216 0 0,0 551.1,709.9 Z"/>
+      <path class="zone" data-zone="south_r6" d="M 565.8,770.1 A 278,278 0 0,1 434.2,770.1 L 441.5,740.0 A 247,247 0 0,0 558.5,740.0 Z"/>
+      <path class="zone" data-zone="south_r7" d="M 573.1,800.2 A 309,309 0 0,1 426.9,800.2 L 434.2,770.1 A 278,278 0 0,0 565.8,770.1 Z"/>
+      <path class="zone" data-zone="south_r8" d="M 580.5,830.3 A 340,340 0 0,1 419.5,830.3 L 426.9,800.2 A 309,309 0 0,0 573.1,800.2 Z"/>
+
+      <!-- SW sector -->
+      <path class="zone" data-zone="sw_r1" d="M 470.9,619.5 A 123,123 0 0,1 380.5,529.1 L 409.6,522.0 A 93,93 0 0,0 478.0,590.4 Z"/>
+      <path class="zone" data-zone="sw_r2" d="M 463.3,650.6 A 155,155 0 0,1 349.4,536.7 L 380.5,529.1 A 123,123 0 0,0 470.9,619.5 Z"/>
+      <path class="zone" data-zone="sw_r3" d="M 456.2,679.7 A 185,185 0 0,1 320.3,543.8 L 349.4,536.7 A 155,155 0 0,0 463.3,650.6 Z"/>
+      <path class="zone" data-zone="sw_r4" d="M 448.9,709.9 A 216,216 0 0,1 290.1,551.1 L 320.3,543.8 A 185,185 0 0,0 456.2,679.7 Z"/>
+      <path class="zone" data-zone="sw_r5" d="M 441.5,740.0 A 247,247 0 0,1 260.0,558.5 L 290.1,551.1 A 216,216 0 0,0 448.9,709.9 Z"/>
+      <path class="zone" data-zone="sw_r6" d="M 434.2,770.1 A 278,278 0 0,1 229.9,565.8 L 260.0,558.5 A 247,247 0 0,0 441.5,740.0 Z"/>
+      <path class="zone" data-zone="sw_r7" d="M 426.9,800.2 A 309,309 0 0,1 199.8,573.1 L 229.9,565.8 A 278,278 0 0,0 434.2,770.1 Z"/>
+      <path class="zone" data-zone="sw_r8" d="M 419.5,830.3 A 340,340 0 0,1 169.7,580.5 L 199.8,573.1 A 309,309 0 0,0 426.9,800.2 Z"/>
+
+      <!-- WEST sector -->
+      <path class="zone" data-zone="west_r1" d="M 380.5,529.1 A 123,123 0 0,1 380.5,470.9 L 409.6,478.0 A 93,93 0 0,0 409.6,522.0 Z"/>
+      <path class="zone" data-zone="west_r2" d="M 349.4,536.7 A 155,155 0 0,1 349.4,463.3 L 380.5,470.9 A 123,123 0 0,0 380.5,529.1 Z"/>
+      <path class="zone" data-zone="west_r3" d="M 320.3,543.8 A 185,185 0 0,1 320.3,456.2 L 349.4,463.3 A 155,155 0 0,0 349.4,536.7 Z"/>
+      <path class="zone" data-zone="west_r4" d="M 290.1,551.1 A 216,216 0 0,1 290.1,448.9 L 320.3,456.2 A 185,185 0 0,0 320.3,543.8 Z"/>
+      <path class="zone" data-zone="west_r5" d="M 260.0,558.5 A 247,247 0 0,1 260.0,441.5 L 290.1,448.9 A 216,216 0 0,0 290.1,551.1 Z"/>
+      <path class="zone" data-zone="west_r6" d="M 229.9,565.8 A 278,278 0 0,1 229.9,434.2 L 260.0,441.5 A 247,247 0 0,0 260.0,558.5 Z"/>
+      <path class="zone" data-zone="west_r7" d="M 199.8,573.1 A 309,309 0 0,1 199.8,426.9 L 229.9,434.2 A 278,278 0 0,0 229.9,565.8 Z"/>
+      <path class="zone" data-zone="west_r8" d="M 169.7,580.5 A 340,340 0 0,1 169.7,419.5 L 199.8,426.9 A 309,309 0 0,0 199.8,573.1 Z"/>
+
+      <!-- Center -->
+      <circle class="zone" data-zone="center" cx="500" cy="500" r="93"/>
+
+      <!-- Crescent zones -->
+      <path class="zone" data-zone="cn" d="M 405,110 A 146,146 0 0,0 595,110 A 115,115 0 0,1 405,110 Z"/>
+      <path class="zone" data-zone="cs" d="M 405,890 A 146,146 0 0,1 595,890 A 115,115 0 0,0 405,890 Z"/>
+      <path class="zone" data-zone="cw" d="M 110,405 A 146,146 0 0,1 110,595 A 115,115 0 0,0 110,405 Z"/>
+      <path class="zone" data-zone="ce" d="M 890,405 A 146,146 0 0,0 890,595 A 115,115 0 0,1 890,405 Z"/>
+
+    </svg>
+  </div>
+</div>
+<div id="lyric-float"></div>
+
+<script>
+let entered=false,fadeTimer=null,audioCtx=null,masterGain=null,droneActive=false;
+let firstClick = false;
+
+// ============================================
+// GENERATIVE AMBIENT DRONE
+// Driven by sonic analysis of the 6 tracks
+// Just Intonation — pure harmonic ratios
+// Each track has its own harmonic fingerprint
+// Clicks shift which track(s) are influencing the sound
+// ============================================
+
+const JI_RATIOS = {
+  'C':  1/1, 'C#': 16/15, 'D':  9/8, 'D#': 6/5, 'E':  5/4, 'F':  4/3,
+  'F#': 7/5, 'G':  3/2, 'G#': 8/5, 'A':  5/3, 'A#': 7/4, 'B':  15/8,
+};
+
+function jiFreq(note, octave) {
+  const cFreq = 32 * Math.pow(2, octave - 1);
+  return cFreq * JI_RATIOS[note];
+}
+
+// Track sonic profiles derived from analysis JSON
+const TRACK_PROFILES = {
+  glow: {
+    root: 'C#', chroma: {'C#': .55, 'G#': .40, 'A': .39, 'B': .36, 'E': .35, 'F#': .33},
+    tempo: 129.2, density: .5, brightness: .3, bassWeight: .77
+  },
+  outside: {
+    root: 'D#', chroma: {'D#': .54, 'F#': .39, 'C#': .35, 'A#': .32, 'G#': .30, 'F': .28},
+    tempo: 117.5, density: .45, brightness: .35, bassWeight: .71
+  },
+  center: { // Take My Hand
+    root: 'A', chroma: {'A': .76, 'G': .41, 'E': .37, 'D': .33, 'C': .28, 'F#': .25},
+    tempo: 123.0, density: .55, brightness: .25, bassWeight: .83
+  },
+  otherside: {
+    root: 'A', chroma: {'A': .75, 'F': .45, 'E': .43, 'D': .36, 'C': .32, 'G': .30},
+    tempo: 123.0, density: .6, brightness: .3, bassWeight: .80
+  },
+  mama: {
+    root: 'D', chroma: {'D': .70, 'F': .36, 'A': .35, 'C': .30, 'G': .28, 'E': .25},
+    tempo: 112.3, density: .4, brightness: .25, bassWeight: .78
+  },
+  air: {
+    root: 'B', chroma: {'B': .62, 'D': .47, 'G': .45, 'A': .38, 'F#': .32, 'E': .28},
+    tempo: 117.5, density: .42, brightness: .3, bassWeight: .80
+  }
+};
+
+// Which track profiles are currently influencing the drone
+let activeProfiles = ['glow', 'air']; // default blend
+
+// Build a weighted tone pool from active profiles
+function buildTonePool() {
+  const pool = [];
+  const chromaAccum = {};
+  
+  activeProfiles.forEach(name => {
+    const prof = TRACK_PROFILES[name];
+    if (!prof) return;
+    for (const [note, weight] of Object.entries(prof.chroma)) {
+      chromaAccum[note] = (chromaAccum[note] || 0) + weight;
+    }
+  });
+  
+  // Normalize and build frequency entries across octaves
+  const maxW = Math.max(...Object.values(chromaAccum));
+  for (const [note, w] of Object.entries(chromaAccum)) {
+    const nw = w / maxW;
+    // Sub-bass (octave 1-2)
+    if (nw > 0.3) pool.push({ freq: jiFreq(note, 1), weight: nw * 0.3 });
+    if (nw > 0.2) pool.push({ freq: jiFreq(note, 2), weight: nw * 0.6 });
+    // Main range (octave 3)
+    pool.push({ freq: jiFreq(note, 3), weight: nw });
+    // Shimmer (octave 4)
+    if (nw > 0.4) pool.push({ freq: jiFreq(note, 4), weight: nw * 0.15 });
+  }
+  
+  return pool;
+}
+
+let voices = [];
+let droneInterval = null;
+let animFrame = null;
+let ripples = [];
+let gl = null, shaderProgram = null, shaderActive = false;
+const SVG_NS = 'http://www.w3.org/2000/svg';
+function rippleLayer() { return document.getElementById('ripple-layer'); }
+
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  masterGain = audioCtx.createGain();
+  masterGain.gain.value = 0;
+  masterGain.connect(audioCtx.destination);
+  masterGain.gain.setTargetAtTime(1.0, audioCtx.currentTime, 3);
+  startRippleAnimation();
+  droneActive = true;
+}
+
+function startDrone() {
+  if (!audioCtx) initAudio();
+  // Launch initial voices
+  spawnVoice();
+  setTimeout(() => spawnVoice(), 1500);
+  setTimeout(() => spawnVoice(), 4000);
+  scheduleDroneEvent();
+}
+
+function scheduleDroneEvent() {
+  // Interval influenced by active profile tempos
+  const avgTempo = activeProfiles.reduce((s, n) => s + (TRACK_PROFILES[n]?.tempo || 120), 0) / activeProfiles.length;
+  const beatMs = 60000 / avgTempo;
+  const delay = beatMs * (2 + Math.random() * 6); // 2-8 beats between events
+  
+  droneInterval = setTimeout(() => {
+    if (!droneActive) return;
+    if (voices.length < 2 || (voices.length < 5 && Math.random() > 0.3)) {
+      spawnVoice();
+    }
+    voices = voices.filter(v => v.active);
+    
+    // Randomly drift to a new profile blend every so often
+    if (Math.random() < 0.15) {
+      const allProfiles = Object.keys(TRACK_PROFILES);
+      const pick1 = allProfiles[Math.floor(Math.random() * allProfiles.length)];
+      const pick2 = allProfiles[Math.floor(Math.random() * allProfiles.length)];
+      activeProfiles = [pick1, pick2];
+    }
+    
+    scheduleDroneEvent();
+  }, delay);
+}
+
+function spawnVoice() {
+  if (!audioCtx || !droneActive) return;
+
+  const pool = buildTonePool();
+  const totalWeight = pool.reduce((s, t) => s + t.weight, 0);
+  let r = Math.random() * totalWeight;
+  let selected = pool[0];
+  for (const tone of pool) {
+    r -= tone.weight;
+    if (r <= 0) { selected = tone; break; }
+  }
+
+  const freq = selected.freq;
+  const drift = freq * (Math.random() - 0.5) * 0.003;
+  const actualFreq = freq + drift;
+
+  const osc = audioCtx.createOscillator();
+  osc.type = 'sine';
+  osc.frequency.value = actualFreq;
+
+  const voiceGain = audioCtx.createGain();
+  voiceGain.gain.value = 0;
+
+  const baseVol = 0.04 + selected.weight * 0.07;
+  const freqFactor = freq > 250 ? 0.4 : freq > 150 ? 0.7 : freq < 60 ? 0.5 : 1.0;
+  const targetVol = baseVol * freqFactor;
+
+  const attackTime = 3 + Math.random() * 5;
+  voiceGain.gain.setTargetAtTime(targetVol, audioCtx.currentTime, attackTime / 3);
+
+  const duration = 8 + Math.random() * 17;
+  const releaseStart = audioCtx.currentTime + duration;
+  const releaseTime = 4 + Math.random() * 6;
+  voiceGain.gain.setTargetAtTime(0, releaseStart, releaseTime / 3);
+
+  osc.connect(voiceGain);
+  voiceGain.connect(masterGain);
+  osc.start();
+
+  const voice = { osc, gain: voiceGain, active: true, freq: actualFreq };
+  voices.push(voice);
+
+  spawnRipple(freq, targetVol, attackTime, duration, releaseTime);
+
+  const totalTime = (duration + releaseTime + 2) * 1000;
+  setTimeout(() => {
+    try { osc.stop(); } catch(e) {}
+    voice.active = false;
+  }, totalTime);
+}
+
+// Audio profile shifting — derive from sector direction
+const SECTOR_AUDIO = {
+  north: ['glow', 'mama'], south: ['air', 'glow'],
+  east: ['outside', 'center'], west: ['otherside', 'mama'],
+  ne: ['outside', 'glow'], nw: ['center', 'mama'],
+  se: ['outside', 'otherside'], sw: ['otherside', 'air'],
+};
+
+function shiftProfiles(zone) {
+  let profiles;
+  if (zone === 'center') { profiles = ['center']; }
+  else if (zone === 'cn') { profiles = ['glow', 'mama']; }
+  else if (zone === 'cs') { profiles = ['air', 'glow']; }
+  else if (zone === 'ce') { profiles = ['outside', 'center']; }
+  else if (zone === 'cw') { profiles = ['otherside', 'mama']; }
+  else {
+    const parts = zone.split('_');
+    const sectorKey = parts.slice(0, -1).join('_');
+    const ringNum = parseInt((parts[parts.length - 1] || '').slice(1)) || 4;
+    profiles = SECTOR_AUDIO[sectorKey] || ['glow', 'air'];
+    // Inner rings lean center, outer lean air
+    if (ringNum <= 2 && !profiles.includes('center')) profiles = [...profiles, 'center'];
+    if (ringNum >= 7 && !profiles.includes('air')) profiles = [...profiles, 'air'];
+  }
+  activeProfiles = profiles;
+  spawnVoice();
+}
+
+function spawnRipple(freq, targetVol, attackTime, duration, releaseTime) {
+  const layer = rippleLayer();
+  if (!layer) return;
+
+  // Each ripple is a circle with a radial gradient — soft golden ring of light
+  // We create a unique gradient per ripple for independent animation
+  const id = 'rg' + Date.now() + Math.floor(Math.random()*9999);
+  
+  const defs = document.querySelector('#symbol-svg defs') || (() => {
+    const d = document.createElementNS(SVG_NS, 'defs');
+    document.getElementById('symbol-svg').prepend(d);
+    return d;
+  })();
+
+  // Radial gradient — a soft ring shape (transparent center, gold band, transparent edge)
+  const grad = document.createElementNS(SVG_NS, 'radialGradient');
+  grad.id = id;
+  grad.setAttribute('cx', '50%');
+  grad.setAttribute('cy', '50%');
+  grad.setAttribute('r', '50%');
+  
+  const stops = [
+    { offset: '0%', color: 'rgba(201,168,76,0)' },
+    { offset: '55%', color: 'rgba(201,168,76,0)' },
+    { offset: '72%', color: 'rgba(201,168,76,0.4)' },
+    { offset: '85%', color: 'rgba(201,168,76,0.15)' },
+    { offset: '100%', color: 'rgba(201,168,76,0)' },
+  ];
+  
+  stops.forEach(s => {
+    const stop = document.createElementNS(SVG_NS, 'stop');
+    stop.setAttribute('offset', s.offset);
+    stop.setAttribute('stop-color', s.color);
+    grad.appendChild(stop);
+  });
+  
+  defs.appendChild(grad);
+
+  // The circle itself — filled with the ring gradient, no stroke
+  const circle = document.createElementNS(SVG_NS, 'circle');
+  circle.setAttribute('cx', '500');
+  circle.setAttribute('cy', '500');
+  circle.setAttribute('r', '1');
+  circle.setAttribute('fill', `url(#${id})`);
+  circle.setAttribute('opacity', '0');
+  layer.appendChild(circle);
+
+  // Expansion: lower frequencies = slower, wider ripples (like deeper water)
+  const speed = 4 + (freq / 320) * 25;
+  const maxRadius = freq < 80 ? 400 : freq < 160 ? 360 : freq < 250 ? 300 : 220;
+  const peakOpacity = Math.min(0.35, targetVol * 3.0);
+
+  const ripple = {
+    circle,
+    grad,
+    gradId: id,
+    speed,
+    maxRadius,
+    peakOpacity,
+    freq,
+    attackTime: attackTime * 1000,
+    duration: duration * 1000,
+    releaseTime: releaseTime * 1000,
+    born: performance.now(),
+    radius: 0,
+    active: true
+  };
+
+  ripples.push(ripple);
+}
+
+function animateRipples(now) {
+  // Clean up dead ripples (remove circle AND gradient from DOM)
+  ripples = ripples.filter(rip => {
+    if (!rip.active) {
+      rip.circle.remove();
+      if (rip.grad && rip.grad.parentNode) rip.grad.remove();
+      return false;
+    }
+    return true;
+  });
+
+  for (const rip of ripples) {
+    const age = now - rip.born;
+    const ageSec = age / 1000;
+
+    // Expand radius smoothly
+    rip.radius += rip.speed * (16.67 / 1000);
+    if (rip.radius > rip.maxRadius) rip.radius = rip.maxRadius;
+
+    // Opacity envelope mirrors the audio gain
+    let opacity = 0;
+    const atkMs = rip.attackTime;
+    const durMs = rip.duration;
+    const relMs = rip.releaseTime;
+
+    if (age < atkMs) {
+      // Attack — fade in
+      const t = age / atkMs;
+      opacity = rip.peakOpacity * t * t; // ease-in quadratic
+    } else if (age < atkMs + durMs) {
+      // Sustain
+      opacity = rip.peakOpacity;
+    } else if (age < atkMs + durMs + relMs * 2.5) {
+      // Release — fade out
+      const relAge = age - atkMs - durMs;
+      const t = 1 - relAge / (relMs * 2.5);
+      opacity = rip.peakOpacity * t * t; // ease-out quadratic
+    } else {
+      rip.active = false;
+      opacity = 0;
+    }
+
+    opacity = Math.max(0, opacity);
+
+    // Undulation — gentle sine modulation of the gradient ring position
+    // Creates the "breathing" pulse feel, speed tied to the voice's frequency
+    // Scaled down dramatically so it's visible (0.3-1.5 Hz visual cycle)
+    const undulFreq = 0.3 + (rip.freq / 400) * 1.2;
+    const undulation = 0.5 + 0.5 * Math.sin(ageSec * undulFreq * Math.PI * 2);
+    
+    // Modulate opacity with undulation
+    opacity *= (0.55 + 0.45 * undulation);
+
+    // Also shift the gradient ring band position with undulation
+    // This makes the bright ring "breathe" inward and outward within the circle
+    if (rip.grad) {
+      const ringCenter = 68 + undulation * 10; // oscillates between 68-78%
+      const stops = rip.grad.querySelectorAll('stop');
+      if (stops.length >= 5) {
+        stops[1].setAttribute('stop-color', `rgba(201,168,76,0)`);
+        stops[1].setAttribute('offset', `${ringCenter - 17}%`);
+        stops[2].setAttribute('stop-color', `rgba(201,168,76,${(0.3 + undulation * 0.2).toFixed(2)})`);
+        stops[2].setAttribute('offset', `${ringCenter}%`);
+        stops[3].setAttribute('stop-color', `rgba(201,168,76,${(0.1 + undulation * 0.08).toFixed(2)})`);
+        stops[3].setAttribute('offset', `${ringCenter + 12}%`);
+      }
+    }
+
+    rip.circle.setAttribute('r', rip.radius.toFixed(1));
+    rip.circle.setAttribute('opacity', opacity.toFixed(4));
+  }
+
+  // Animate persistent pond ripples
+  renderShader();
+
+  animFrame = requestAnimationFrame(animateRipples);
+}
+
+// ====== WEBGL INTERFERENCE SHADER ======
+const VERT_SRC = `attribute vec2 a_pos;void main(){gl_Position=vec4(a_pos,0,1);}`;
+const FRAG_SRC = `
+precision mediump float;
+uniform vec2 u_res;
+uniform float u_time;
+uniform float u_freqs[8];
+uniform float u_amps[8];
+uniform int u_count;
+
+void main(){
+  vec2 uv=(gl_FragCoord.xy/u_res)*2.0-1.0;
+  uv.x*=u_res.x/u_res.y;
+  float dist=length(uv);
+  
+  // Circular mask — fade out beyond symbol radius
+  float mask=smoothstep(0.98,0.72,dist);
+  
+  // Accumulate wave interference from all active voices
+  float wave=0.0;
+  float totalAmp=0.0;
+  
+  for(int i=0;i<8;i++){
+    if(i>=u_count)break;
+    float f=u_freqs[i];
+    float a=u_amps[i];
+    if(a<0.001)continue;
+    
+    // Each voice creates a circular wave from center
+    // Frequency scaled way down for slow visual movement
+    float visualFreq=f*0.008;
+    float speed=0.15+f*0.0003;
+    float phase=dist*visualFreq-u_time*speed;
+    
+    // Sine wave with slight harmonic overtone
+    float w=sin(phase)*0.7+sin(phase*2.03+1.1)*0.3;
+    wave+=w*a;
+    totalAmp+=a;
+  }
+  
+  // Normalize
+  if(totalAmp>0.0)wave/=max(totalAmp,1.0);
+  
+  // Add very slow base ripple even with no voices
+  float baseRipple=sin(dist*6.0-u_time*0.12)*0.15+sin(dist*3.5-u_time*0.07+0.5)*0.1;
+  wave+=baseRipple;
+  
+  // Interference creates bright ridges where waves align
+  // Map to gold color with variable intensity
+  float brightness=wave*0.5+0.5;
+  brightness=pow(brightness,2.8);// sharpen the ridges
+  brightness*=0.14;// overall intensity — subtle
+  
+  // Slight radial fade — brighter near center
+  brightness*=mix(1.0,0.4,dist);
+  
+  // Gold color
+  vec3 gold=vec3(0.79,0.66,0.30);
+  vec3 col=gold*brightness*mask;
+  
+  // Gentle noise-like shimmer from wave interactions
+  float shimmer=sin(uv.x*40.0+u_time*0.3)*sin(uv.y*40.0-u_time*0.2)*0.02*mask;
+  col+=gold*max(shimmer,0.0);
+  
+  vec3 bg=vec3(0.031);
+  gl_FragColor=vec4(bg+col,1.0);
+}`;
+
+function initShader() {
+  const canvas = document.getElementById('shader-canvas');
+  if (!canvas) return;
+  
+  // Size canvas to match symbol-wrap
+  const wrap = document.getElementById('symbol-wrap');
+  const size = Math.ceil(wrap.clientWidth * (window.devicePixelRatio || 1));
+  canvas.width = size;
+  canvas.height = size;
+  
+  gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: false });
+  if (!gl) return;
+  
+  // Compile shaders
+  const vs = gl.createShader(gl.VERTEX_SHADER);
+  gl.shaderSource(vs, VERT_SRC);
+  gl.compileShader(vs);
+  
+  const fs = gl.createShader(gl.FRAGMENT_SHADER);
+  gl.shaderSource(fs, FRAG_SRC);
+  gl.compileShader(fs);
+  
+  if (!gl.getShaderParameter(fs, gl.COMPILE_STATUS)) {
+    console.error('Shader error:', gl.getShaderInfoLog(fs));
+    return;
+  }
+  
+  shaderProgram = gl.createProgram();
+  gl.attachShader(shaderProgram, vs);
+  gl.attachShader(shaderProgram, fs);
+  gl.linkProgram(shaderProgram);
+  gl.useProgram(shaderProgram);
+  
+  // Full-screen quad
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1]), gl.STATIC_DRAW);
+  const pos = gl.getAttribLocation(shaderProgram, 'a_pos');
+  gl.enableVertexAttribArray(pos);
+  gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
+  
+  gl.clearColor(0.031, 0.031, 0.031, 1); // matches #080808
+  
+  canvas.classList.add('active');
+  shaderActive = true;
+}
+
+function renderShader() {
+  if (!gl || !shaderProgram || !shaderActive) return;
+  
+  // Resize check
+  const canvas = gl.canvas;
+  const wrap = document.getElementById('symbol-wrap');
+  const targetSize = Math.ceil(wrap.clientWidth * (window.devicePixelRatio || 1));
+  if (canvas.width !== targetSize) {
+    canvas.width = targetSize;
+    canvas.height = targetSize;
+    gl.viewport(0, 0, targetSize, targetSize);
+  }
+  
+  gl.viewport(0, 0, canvas.width, canvas.height);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  
+  // Time
+  const t = performance.now() / 1000;
+  gl.uniform1f(gl.getUniformLocation(shaderProgram, 'u_time'), t);
+  gl.uniform2f(gl.getUniformLocation(shaderProgram, 'u_res'), canvas.width, canvas.height);
+  
+  // Gather active voice data
+  const activeVoices = voices.filter(v => v.active);
+  const freqs = new Float32Array(8);
+  const amps = new Float32Array(8);
+  const count = Math.min(activeVoices.length, 8);
+  
+  for (let i = 0; i < count; i++) {
+    freqs[i] = activeVoices[i].freq;
+    // Read actual gain value for live amplitude
+    try {
+      amps[i] = activeVoices[i].gain.gain.value;
+    } catch(e) {
+      amps[i] = 0.05;
+    }
+  }
+  
+  gl.uniform1fv(gl.getUniformLocation(shaderProgram, 'u_freqs'), freqs);
+  gl.uniform1fv(gl.getUniformLocation(shaderProgram, 'u_amps'), amps);
+  gl.uniform1i(gl.getUniformLocation(shaderProgram, 'u_count'), count);
+  
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+}
+
+// Start animation loop when audio starts
+function startRippleAnimation() {
+  initShader();
+  if (!animFrame) {
+    animFrame = requestAnimationFrame(animateRipples);
+  }
+}
+
+function enter(){
+  if(entered)return;entered=true;
+  const v=document.getElementById('veil');v.classList.add('fading');
+  setTimeout(()=>{v.style.display='none';document.getElementById('world').classList.add('visible')},800);
+}
+// ============================================
+// LYRIC CORPUS — every line from all 6 tracks
+// Tagged by thematic zone for combinatorial generation
+// ============================================
+
+// Tagged stanzas — tags use exact words from the symbol diagram
+const TAGGED_STANZAS = [
+  // === GLOW ===
+  { lines: ["Oh the glow in the distance", "Is the same light inside of you"], song: 'glow',
+    tags: ['light', 'spiritual', 'fire', 'cosmic', 'vision', 'third_eye'] },
+  { lines: ["And so to let go and know you're finished", "Then to say good bye this time holds true"], song: 'glow',
+    tags: ['death', 'elder', 'air', 'winter', 'receive', 'cold', 'rest'] },
+  { lines: ["Lay beside your body", "Inner eyes feel their way"], song: 'glow',
+    tags: ['third_eye', 'spiritual', 'vision', 'root', 'physical'] },
+  { lines: ["Intertwined deep waters", "Intertwined we pray"], song: 'glow',
+    tags: ['water', 'sacral', 'liquid', 'deep', 'spring', 'wet'] },
+  { lines: ["All of my life I see you walking away", "Into the light of the night"], song: 'glow',
+    tags: ['light', 'death', 'time', 'elder', 'cosmic', 'dark'] },
+  { lines: ["Sunrays on your face"], song: 'glow',
+    tags: ['light', 'fire', 'summer', 'offer', 'hot', 'sunrise'] },
+  { lines: ["Gma ur w gpa now", "Gpa ur w gma now"], song: 'glow',
+    tags: ['elder', 'death', 'family', 'beyond', 'cosmic', 'spiritual'] },
+  { lines: ["Night and day", "I see you drift into space"], song: 'glow',
+    tags: ['time', 'space', 'cosmic', 'beyond', 'dark', 'light'] },
+  { lines: ["I feel that love that you gave", "I'll give that love that you gave"], song: 'glow',
+    tags: ['heart', 'offer', 'receive', 'family', 'emotions'] },
+  { lines: ["I see you living thru me"], song: 'glow',
+    tags: ['life', 'spiritual', 'self', 'root', 'vision'] },
+
+  // === OUTSIDE ===
+  { lines: ["On the outside", "Anybody listening?"], song: 'outside',
+    tags: ['throat', 'community', 'electric', 'outside'] },
+  { lines: ["Calling by name", "Everything is missing"], song: 'outside',
+    tags: ['throat', 'emotions', 'outside'] },
+  { lines: ["Everyone is listening", "Everything is living", "Calling our names"], song: 'outside',
+    tags: ['community', 'universal', 'life', 'throat'] },
+  { lines: ["Learn to trust what I have not touched", "Burning lust into whats best for us"], song: 'outside',
+    tags: ['fire', 'hot', 'solar_plexus', 'self', 'truth'] },
+  { lines: ["Walls are falling never been so clear", "All and all its only love or fear"], song: 'outside',
+    tags: ['truth', 'heart', 'honesty', 'courage', 'emotions'] },
+  { lines: ["Past and future always been right here", "Birth and death it's windows doors and mirrors"], song: 'outside',
+    tags: ['time', 'life', 'death', 'space', 'cosmic'] },
+  { lines: ["Follow truth heal everything at once", "Fall in love with everything at once"], song: 'outside',
+    tags: ['truth', 'heart', 'universal', 'honesty', 'compassion'] },
+  { lines: ["Through all the ages waited now they found you", "Bare naked formless angels they surround you"], song: 'outside',
+    tags: ['cosmic', 'beyond', 'universal', 'spiritual', 'air'] },
+  { lines: ["Who whisper in your ear what you amount to", "And lift you from the ground that you were bound to"], song: 'outside',
+    tags: ['air', 'spiritual', 'earth', 'sunrise', 'high'] },
+  { lines: ["Reminding you your the one you once vowed to"], song: 'outside',
+    tags: ['self', 'root', 'truth', 'honesty', 'responsibility'] },
+
+  // === CENTER (Take My Hand) ===
+  { lines: ["Take my hand and cross invisible lines", "To feel this world from inside"], song: 'center',
+    tags: ['space', 'self', 'integration'] },
+  { lines: ["Its everything", "Make and break"], song: 'center',
+    tags: ['universal', 'creation', 'life', 'death'] },
+  { lines: ["Get lost and in you will find", "To be blinded by this light"], song: 'center',
+    tags: ['light', 'vision', 'third_eye', 'self', 'deep'] },
+  { lines: ["Day by day", "Memories"], song: 'center',
+    tags: ['time', 'mind', 'self'] },
+  { lines: ["Mind makes time", "How memories are designed"], song: 'center',
+    tags: ['mind', 'time', 'crown', 'spiritual'] },
+  { lines: ["Still everything all the time is happening"], song: 'center',
+    tags: ['time', 'space', 'universal', 'cosmic'] },
+  { lines: ["Take my hand and cross invisible sides"], song: 'center',
+    tags: ['space', 'self', 'integration'] },
+  { lines: ["Time takes time"], song: 'center',
+    tags: ['time', 'self', 'mind', 'rest'] },
+
+  // === OTHERSIDE ===
+  { lines: ["Otherwise", "Sun will slowly disappear into the other side"], song: 'otherside',
+    tags: ['sunset', 'fall', 'earth', 'magnetic', 'dark', 'west'] },
+  { lines: ["Run and hide", "No where to find you alone"], song: 'otherside',
+    tags: ['self', 'dark', 'deep', 'fear'] },
+  { lines: ["You know its time to come inside"], song: 'otherside',
+    tags: ['receive', 'winter', 'self', 'root', 'earth', 'rest'] },
+  { lines: ["All those whose feeling its you", "Follow just don't make a move"], song: 'otherside',
+    tags: ['community', 'emotions', 'sacral', 'physical'] },
+  { lines: ["Also its bleeding its true", "All know what we've came to do"], song: 'otherside',
+    tags: ['truth', 'root', 'physical', 'community'] },
+  { lines: ["Wonder why", "Oh the web we weave it leads us to our mother's eyes"], song: 'otherside',
+    tags: ['maternal', 'family', 'vision', 'wet'] },
+  { lines: ["Hunger lies", "On its knees to feed the meaning to another lie"], song: 'otherside',
+    tags: ['solar_plexus', 'truth', 'dark', 'hot'] },
+  { lines: ["All of these reasons to breathe", "Far as those little eyes can see"], song: 'otherside',
+    tags: ['air', 'life', 'child', 'vision'] },
+  { lines: ["Blind before beauty can be", "Try not to try to believe"], song: 'otherside',
+    tags: ['vision', 'third_eye', 'courage', 'spiritual'] },
+  { lines: ["Come inside"], song: 'otherside',
+    tags: ['receive', 'winter', 'dark', 'self', 'root', 'rest'] },
+
+  // === MAMA ===
+  { lines: ["Mama", "We take care of you"], song: 'mama',
+    tags: ['maternal', 'family', 'heart', 'compassion'] },
+  { lines: ["Promise to be fair and true", "Love us like you always do"], song: 'mama',
+    tags: ['truth', 'family', 'honesty', 'heart', 'compassion'] },
+  { lines: ["Love us like your mother loved you"], song: 'mama',
+    tags: ['maternal', 'family', 'child', 'elder'] },
+  { lines: ["So the moment that you need that peace of mind", "Know deep down and receive"], song: 'mama',
+    tags: ['mind', 'receive', 'deep', 'crown', 'rest'] },
+  { lines: ["Feel free to fly"], song: 'mama',
+    tags: ['air', 'spiritual', 'high', 'spring'] },
+  { lines: ["Of all the offerings you make to bring new life", "Comes from our mama"], song: 'mama',
+    tags: ['offer', 'life', 'maternal', 'creation', 'fire'] },
+  { lines: ["So we hold you deep inside with peace of mind"], song: 'mama',
+    tags: ['deep', 'mind', 'sacral', 'wet', 'self'] },
+  { lines: ["In your arms we grew our wings", "In your eyes first seen the sky"], song: 'mama',
+    tags: ['child', 'family', 'vision', 'air', 'high', 'maternal'] },
+
+  // === AIR ===
+  { lines: ["Feel it in the air", "Our love it surrounds you"], song: 'air',
+    tags: ['air', 'universal', 'spiritual', 'cosmic', 'beyond'] },
+  { lines: ["Beaming here to there", "Always all around you"], song: 'air',
+    tags: ['light', 'cosmic', 'universal', 'spiritual'] },
+  { lines: ["Being as you may", "Free to find your way"], song: 'air',
+    tags: ['self', 'spiritual', 'spring'] },
+  { lines: ["So with each breath you take", "We will be"], song: 'air',
+    tags: ['air', 'life', 'cosmic', 'spiritual', 'beyond'] },
+  { lines: ["Being as you are", "Leading through your heart"], song: 'air',
+    tags: ['heart', 'self', 'truth'] },
+  { lines: ["So then with each step you take"], song: 'air',
+    tags: ['earth', 'root', 'physical'] },
+];
+
+// Build flat LINES and STANZAS for backwards compat
+const LINES = {};
+const STANZAS = {};
+for (const s of TAGGED_STANZAS) {
+  if (!STANZAS[s.song]) STANZAS[s.song] = [];
+  STANZAS[s.song].push(s.lines);
+  if (!LINES[s.song]) LINES[s.song] = [];
+  LINES[s.song].push(...s.lines);
+}
+
+// ============================================
+// CELL TAGS — exact vocabulary from the symbol diagram
+// Each sector and ring tagged with the words that literally appear on the diagram
+// ============================================
+
+const SECTOR_TAGS = {
+  north: ['offer', 'high', 'light', 'summer', 'fire', 'leo', 'creation'],
+  south: ['receive', 'deep', 'dark', 'winter', 'air', 'aquarius', 'introspection', 'rest'],
+  east:  ['sunrise', 'spring', 'water', 'electric', 'taurus', 'vision', 'receive'],
+  west:  ['sunset', 'fall', 'earth', 'magnetic', 'scorpio', 'integration'],
+  ne:    ['honesty', 'truth', 'responsibility', 'virgo', 'creation'],
+  nw:    ['compassion', 'cooperation', 'gemini', 'reach', 'cancer'],
+  se:    ['resourcefulness', 'discipline', 'sagittarius', 'capricorn'],
+  sw:    ['courage', 'respect', 'humility', 'pisces', 'aries'],
+};
+
+const RING_TAGS = {
+  // Exact words from diagram, center outward
+  r1: ['root', 'spicy', 'self', 'life', 'death'],
+  r2: ['sacral', 'umami', 'wet', 'dry', 'maternal', 'paternal'],
+  r3: ['solar_plexus', 'hot', 'cold', 'family'],
+  r4: ['heart', 'bitter', 'astringent', 'liquid', 'solid', 'child', 'adult'],
+  r5: ['throat', 'sour', 'salty', 'plasma', 'gas', 'adolescent', 'elder'],
+  r6: ['third_eye', 'sweet', 'emotions', 'physical', 'community', 'universal'],
+  r7: ['crown', 'mind', 'spiritual'],
+  r8: ['beyond', 'cosmic'],
+};
+
+function getCellTags(zoneId) {
+  if (zoneId === 'center') return ['space', 'time', 'life', 'death', 'self'];
+  if (zoneId === 'cn') return ['offer', 'high', 'light', 'summer', 'fire', 'reach'];
+  if (zoneId === 'cs') return ['receive', 'deep', 'dark', 'winter', 'rest'];
+  if (zoneId === 'ce') return ['sunrise', 'spring', 'water', 'electric', 'vision'];
+  if (zoneId === 'cw') return ['sunset', 'fall', 'earth', 'magnetic', 'integration'];
+
+  const parts = zoneId.split('_');
+  const sectorKey = parts.slice(0, -1).join('_');
+  const ringKey = parts[parts.length - 1];
+  return [...(SECTOR_TAGS[sectorKey] || []), ...(RING_TAGS[ringKey] || [])];
+}
+
+function scoreStanza(stanza, cellTags) {
+  let score = 0;
+  for (const tag of stanza.tags) {
+    if (cellTags.includes(tag)) score += 1;
+  }
+  return score;
+}
+
+// Track recently used stanzas to prevent repeats
+const recentlyUsed = new Set();
+const RECENT_LIMIT = 18;
+const recentQueue = [];
+
+function selectStanza(cellTags) {
+  const scored = TAGGED_STANZAS.map((s, i) => ({
+    idx: i, stanza: s, score: scoreStanza(s, cellTags)
+  }));
+
+  // Filter recently used
+  const available = scored.filter(s => !recentlyUsed.has(s.idx));
+  const pool = available.length > 0 ? available : scored;
+
+  pool.sort((a, b) => b.score - a.score);
+
+  // Top tier: within 1 point of best score for variety
+  const topScore = pool[0].score;
+  const topTier = pool.filter(s => s.score >= topScore - 1);
+  const pick = topTier[Math.floor(Math.random() * topTier.length)];
+
+  // Mark used
+  recentlyUsed.add(pick.idx);
+  recentQueue.push(pick.idx);
+  if (recentQueue.length > RECENT_LIMIT) {
+    recentlyUsed.delete(recentQueue.shift());
+  }
+
+  return [...pick.stanza.lines];
+}
+
+// Queued lyric drip — lines enter one at a time, zone lights sync with lyrics
+let textTimeout = null;
+const lyricQueue = []; // each item: { text, zoneEl }
+let dripActive = false;
+const DRIP_SPACING = 3000;
+const DRIP_DURATION = 20000;
+
+function dripLine(text, zoneEl, tier) {
+  const f = document.getElementById('lyric-float');
+  
+  const div = document.createElement('div');
+  div.className = 'drip tier-' + tier;
+  div.textContent = text;
+  f.appendChild(div);
+  
+  const litClass = 'lit-' + tier;
+  
+  // Pulse the zone — quick flash then fade, like a ripple activation
+  if (zoneEl) {
+    zoneEl.classList.remove('pulse');
+    void zoneEl.offsetWidth; // force reflow to restart animation
+    zoneEl.classList.add('pulse');
+  }
+  
+  // Remove drip element after animation
+  setTimeout(() => { if (div.parentNode) div.parentNode.removeChild(div); }, DRIP_DURATION + 500);
+}
+
+function processQueue() {
+  if (lyricQueue.length === 0) {
+    dripActive = false;
+    return;
+  }
+  
+  dripActive = true;
+  const item = lyricQueue.shift();
+  dripLine(item.text, item.zoneEl, item.tier);
+  
+  setTimeout(processQueue, DRIP_SPACING);
+}
+
+function displayKoan(text, zoneEl, tier) {
+  const lines = text.split('\n').filter(l => l.trim());
+  
+  lines.forEach(line => {
+    lyricQueue.push({ text: line.trim(), zoneEl: zoneEl, tier: tier });
+  });
+  
+  if (!dripActive) {
+    processQueue();
+  }
+}
+
+// Zone touch handler — pure call and response
+function handleZoneTouch(z) {
+  const zone = z.dataset.zone;
+  if (!zone) return;
+  
+  // Start audio on first click (browser requires user gesture)
+  if (!firstClick) {
+    firstClick = true;
+    initAudio();
+    startDrone();
+  }
+  
+  // Shift harmonic profile
+  shiftProfiles(zone);
+  
+  // Select best-matching stanza for this cell
+  const cellTags = getCellTags(zone);
+  const lines = selectStanza(cellTags);
+  const text = lines.join('\n');
+  
+  displayKoan(text, z, 'bronze');
+}
+
+document.querySelectorAll('.zone').forEach(z=>{
+  z.addEventListener('click',e=>{e.stopPropagation();handleZoneTouch(z)});
+  z.addEventListener('touchstart',e=>{e.preventDefault();e.stopPropagation();handleZoneTouch(z)},{passive:false});
+});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&!entered)enter()});
+document.addEventListener('mousemove',e=>{if(!entered)return;const w=document.getElementById('symbol-wrap');const cx=(e.clientX/window.innerWidth-.5)*2;const cy=(e.clientY/window.innerHeight-.5)*2;w.style.transform=`translate(${cx*2}px,${cy*2}px)`});
+</script>
+</body>
+</html>
