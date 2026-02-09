@@ -38,6 +38,17 @@ html,body{background:var(--blk);color:var(--gold);font-family:'Cormorant Garamon
 #album-name{font-family:'Instrument Serif',Georgia,serif;font-size:clamp(15px,2.4vw,24px);letter-spacing:.55em;color:var(--gold-d);opacity:.5}
 #artist-name{font-family:'Cormorant Garamond',serif;font-weight:300;font-style:italic;font-size:clamp(12px,1.5vw,16px);letter-spacing:.3em;color:var(--gold-d);opacity:.3;margin-top:.4em}
 #grain{position:fixed;inset:0;opacity:.025;pointer-events:none;z-index:999;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-repeat:repeat;background-size:256px}
+@media(max-width:768px){
+  #world{align-items:center;padding-top:0}
+  #symbol-wrap{width:88vw;height:88vw}
+  #album-header{top:2vh}
+  #album-name{font-size:clamp(13px,4vw,20px);letter-spacing:.35em}
+  #artist-name{font-size:clamp(11px,2.8vw,15px);letter-spacing:.2em}
+  #lyric-float{font-size:clamp(15px,4.2vw,22px);width:85vw}
+}
+@media(max-width:768px){
+  @keyframes drip-fall{0%{opacity:0;top:92vh}4%{opacity:.25}10%{opacity:.6}16%{opacity:.75}78%{opacity:.65}88%{opacity:.35}95%{opacity:.12}100%{opacity:0;top:60vh}}
+}
 </style>
 </head>
 <body>
@@ -320,6 +331,8 @@ function rippleLayer() { return document.getElementById('ripple-layer'); }
 function initAudio() {
   if (audioCtx) return;
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  // iOS requires explicit resume after user gesture
+  if (audioCtx.state === 'suspended') audioCtx.resume();
   masterGain = audioCtx.createGain();
   masterGain.gain.value = 0;
   masterGain.connect(audioCtx.destination);
@@ -1057,7 +1070,7 @@ document.querySelectorAll('.zone').forEach(z=>{
   z.addEventListener('touchstart',e=>{e.preventDefault();e.stopPropagation();handleZoneTouch(z)},{passive:false});
 });
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&!entered)enter()});
-document.addEventListener('mousemove',e=>{if(!entered)return;const w=document.getElementById('symbol-wrap');const cx=(e.clientX/window.innerWidth-.5)*2;const cy=(e.clientY/window.innerHeight-.5)*2;w.style.transform=`translate(${cx*2}px,${cy*2}px)`});
+if(!('ontouchstart' in window)){document.addEventListener('mousemove',e=>{if(!entered)return;const w=document.getElementById('symbol-wrap');const cx=(e.clientX/window.innerWidth-.5)*2;const cy=(e.clientY/window.innerHeight-.5)*2;w.style.transform=`translate(${cx*2}px,${cy*2}px)`});}
 </script>
 </body>
 </html>
